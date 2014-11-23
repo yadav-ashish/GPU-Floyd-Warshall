@@ -1,0 +1,43 @@
+
+//#pragma OPENCL EXTENSION all : enable
+__kernel void helloworld(__global int* in, __global int* out)
+{
+	int num = get_global_id(0);
+	out[num] = in[num] + 1;
+}
+__kernel void floydwarshall(__global int *readBuffer,__global int *noc,__global int *writeBuffer,__global int *k)
+{
+	int id0,id1,final;
+	__local int cities,i;
+	cities=*noc;
+	i=*k;
+	id0=get_global_id(0);
+	id1=get_global_id(1);
+	
+	final=readBuffer[id0*cities+i]+readBuffer[i*cities+id1];
+	final=min(final,readBuffer[id0*cities+id1]);
+
+	writeBuffer[id0*cities+id1]=final;
+	
+}
+
+__kernel void floydwarshall2(__global int *readBuffer,__global int *noc,__global int *writeBuffer,__global int*k,__global int *row,__global int *col)
+{
+	int id0,id1,final;
+	__local int cities,i;
+	cities=*noc;
+	i=*k;
+	id0=get_global_id(0);
+	id1=get_global_id(1);
+	id0=id0+((*row)*200);			////////////////*************************????????????????
+	id1=id1+((*col)*200);			////////////////*************************????????????????
+
+	
+	if(id0<*noc&&id1<*noc)
+	{
+		final=readBuffer[id0*cities+i]+readBuffer[i*cities+id1];
+		final=min(final,readBuffer[id0*cities+id1]);
+
+		writeBuffer[id0*cities+id1]=final;
+	}
+}

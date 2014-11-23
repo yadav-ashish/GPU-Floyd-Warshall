@@ -1,0 +1,554 @@
+//For clarity,error checking has been omitted.
+//#include <CL/cl.h>
+//#include <string.h>
+//#include <stdio.h>
+//#include <stdlib.h>
+//#include <iostream>
+//#include <string>
+//#include <fstream>
+//using namespace std;
+//
+///* convert the kernel file into a string */
+//int convertToString(const char *filename, std::string& s)
+//{
+//	size_t size;
+//	char*  str;
+//	std::fstream f(filename, (std::fstream::in | std::fstream::binary));
+//
+//	if(f.is_open())
+//	{
+//		size_t fileSize;
+//		f.seekg(0, std::fstream::end);
+//		size = fileSize = (size_t)f.tellg();
+//		f.seekg(0, std::fstream::beg);
+//		str = new char[size+1];
+//		if(!str)
+//		{
+//			f.close();
+//			return 0;
+//		}
+//
+//		f.read(str, fileSize);
+//		f.close();
+//		str[size] = '\0';
+//		s = str;
+//		delete[] str;
+//		return 0;
+//	}
+//	cout<<"Error: failed to open file\n:"<<filename<<endl;
+//	return -1;
+//}
+//
+//int main(int argc, char* argv[])
+//{
+//
+//	/*Step1: Getting platforms and choose an available one.*/
+//	cl_uint numPlatforms;//the NO. of platforms
+//	cl_platform_id platform = NULL;//the chosen platform
+//	cl_int	status = clGetPlatformIDs(0, NULL, &numPlatforms);
+//	if (status != CL_SUCCESS)
+//	{
+//		cout<<"Error: Getting platforms!"<<endl;
+//		return 1;
+//	}
+//
+//	/*For clarity, choose the first available platform. */
+//	if(numPlatforms > 0)
+//	{
+//		cl_platform_id* platforms = (cl_platform_id* )malloc(numPlatforms* sizeof(cl_platform_id));
+//		status = clGetPlatformIDs(numPlatforms, platforms, NULL);
+//		platform = platforms[0];
+//		free(platforms);
+//	}
+//
+//	/*Step 2:Query the platform and choose the first GPU device if has one.Otherwise use the CPU as device.*/
+//	cl_uint				numDevices = 0;
+//	cl_device_id        *devices;
+//	status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, NULL, &numDevices);	
+//	if (numDevices == 0) //no GPU available.
+//	{
+//		cout << "No GPU device available."<<endl;
+//		cout << "Choose CPU as default device."<<endl;
+//		status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_CPU, 0, NULL, &numDevices);	
+//		devices = (cl_device_id*)malloc(numDevices * sizeof(cl_device_id));
+//
+//		status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_CPU, numDevices, devices, NULL);
+//	}
+//	else
+//	{
+//		devices = (cl_device_id*)malloc(numDevices * sizeof(cl_device_id));
+//
+//		status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, numDevices, devices, NULL);
+//	}
+//	printf("Number_of_Devices %d", numDevices);
+//	
+//
+//	/*Step 3: Create context.*/
+//	cl_context context = clCreateContext(NULL,1, devices,NULL,NULL,NULL);
+//	
+//	/*Step 4: Creating command queue associate with the context.*/
+//	cl_command_queue commandQueue = clCreateCommandQueue(context, devices[0], 0, NULL);
+//	
+//	/*Step 5: Create program object */
+//	const char *filename = "HelloWorld_Kernel.cl";
+//	string sourceStr;
+//	status = convertToString(filename, sourceStr);
+//	const char *source = sourceStr.c_str();
+//	size_t sourceSize[] = {strlen(source)};
+//	cl_program program = clCreateProgramWithSource(context, 1, &source, sourceSize, NULL);
+//	if(program==NULL)
+//	{
+//		printf("program object null");
+//		exit(1);
+//	}
+//	/*Step 6: Build program. */
+//	status=clBuildProgram(program, 1,devices,NULL,NULL,NULL);
+//	if(status==CL_INVALID_BINARY)
+//	{
+//		printf("build error 1\n");
+//		scanf("%*c");
+//		exit(1);
+//	}
+//	else if(status==CL_COMPILER_NOT_AVAILABLE)
+//	{
+//		printf("build error 2\n");
+//		scanf("%*c");
+//		exit(1);
+//	}
+//	else if(status==CL_OUT_OF_RESOURCES)
+//	{
+//		printf("build error 3\n");
+//		scanf("%*c");
+//		exit(1);
+//	}
+//	else if(status==CL_OUT_OF_HOST_MEMORY)
+//	{
+//		printf("build error 4\n");
+//		scanf("%*c");
+//		exit(1);
+//	}
+//	else if(status!=CL_SUCCESS)
+//	{
+//		printf("build error\n");
+//			scanf("%*c");
+//	}
+//
+//	char *log;
+//	size_t sizelog;
+//	clGetProgramBuildInfo(program,devices[0],CL_PROGRAM_BUILD_LOG,0,NULL,&sizelog);
+//	log=(char*)malloc(sizeof(char)*sizelog);
+//	clGetProgramBuildInfo(program,devices[0],CL_PROGRAM_BUILD_LOG,sizelog,log,NULL);
+//	printf("log=%s\n",log);
+//	//printf("here");
+//	
+//	/*Step 7: Initial input,output for the host and create memory objects for the kernel*/
+//	int graph[900]={0},index=0,noc=0,total=0,result[900]={0},i,j,random[1000]={0},Foods[10][100];
+//	printf("Enter no of cities");
+//	
+//	scanf("%d",&noc);
+//
+//	for(i=0;i<noc;i++)
+//	{
+//		for(j=0;j<noc;j++)
+//		{
+//			index=i*noc+j;
+//			scanf("%d",&graph[index]);
+//		}
+//	}
+//
+//	for(i=0;i<10;i++)
+//	{
+//		for(j=0;j<100;j++)
+//		{
+//			
+//	//const int input[] = {1,2,3,4,5};
+//	//size_t strlength = strlen(input);
+//	//cout<<"input string:"<<endl;
+//	//cout<<input<<endl;
+//	//int output[5];
+//
+//	cl_mem inputBuffer = clCreateBuffer(context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR,sizeof(input),(void *) input, NULL);
+//	cl_mem outputBuffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY , sizeof(output), NULL, NULL);
+//	cl_mem graphBuffer = clCreateBuffer(context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR,sizeof(graph),(void*)graph,NULL);
+//	cl_mem nocBuffer = clCreateBuffer(context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR,sizeof(int),(void*)&noc,NULL);
+//	cl_mem graphbuffer = clCreateBuffer(context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR,sizeof(graph),(void*)graph,NULL);
+//
+//	/*Step 8: Create kernel object */
+//	cl_kernel kernel = clCreateKernel(program,"helloworld", NULL);
+//
+//	/*Step 9: Sets Kernel arguments.*/
+//	status = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&inputBuffer);
+//	status = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&outputBuffer);
+//	
+//	/*Step 10: Running the kernel.*/
+//	size_t global_work_size[1] = {5};
+//	status = clEnqueueNDRangeKernel(commandQueue, kernel, 1, NULL, global_work_size, NULL, 0, NULL, NULL);
+//	if(status!=CL_SUCCESS)
+//	{
+//		printf("kernel enqueue error\n");
+//		scanf("%*c");
+//		exit(1);
+//	}
+//	/*Step 11: Read the cout put back to host memory.*/
+//	status = clEnqueueReadBuffer(commandQueue, outputBuffer, CL_TRUE, 0, sizeof(input), output, 0, NULL, NULL);
+//	if(status!=CL_SUCCESS)
+//	{
+//		printf("read error\n");
+//		scanf("%*c");
+//		exit(1);
+//	}
+//	for(int i=0;i<5;i++)
+//		printf("%d ",output[i]);
+//	//output[strlength] = '\0';//Add the terminal character to the end of output.
+//	//cout<<"output string:"<<endl;
+//	//cout<<output<<endl;
+//	//printf("%s",output);
+//
+//	/*Step 12: Clean the resources.*/
+//	status = clReleaseKernel(kernel);//*Release kernel.
+//	status = clReleaseProgram(program);	//Release the program object.
+//	status = clReleaseMemObject(inputBuffer);//Release mem object.
+//	status = clReleaseMemObject(outputBuffer);
+//	status = clReleaseCommandQueue(commandQueue);//Release  Command queue.
+//	status = clReleaseContext(context);//Release context.
+//
+//	/*if (output != NULL)
+//	{
+//		free(output);
+//		output = NULL;
+//	}
+//*/
+//	if (devices != NULL)
+//	{
+//		free(devices);
+//		devices = NULL;
+//	}
+//	scanf("%*c");
+//	return 0;
+//}
+
+
+//////////  floyd warshall code  ///////////////////////
+
+#include <CL/cl.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <time.h>
+using namespace std;
+
+/* convert the kernel file into a string */
+int convertToString(const char *filename, std::string& s)
+{
+	size_t size;
+	char*  str;
+	std::fstream f(filename, (std::fstream::in | std::fstream::binary));
+
+	if(f.is_open())
+	{
+		size_t fileSize;
+		f.seekg(0, std::fstream::end);
+		size = fileSize = (size_t)f.tellg();
+		f.seekg(0, std::fstream::beg);
+		str = new char[size+1];
+		if(!str)
+		{
+			f.close();
+			return 0;
+		}
+
+		f.read(str, fileSize);
+		f.close();
+		str[size] = '\0';
+		s = str;
+		delete[] str;
+		return 0;
+	}
+	cout<<"Error: failed to open file\n:"<<filename<<endl;
+	return -1;
+}
+int graph[25000000],result[25000000];
+int main(int argc, char* argv[])
+{
+
+	/*Step1: Getting platforms and choose an available one.*/
+	cl_uint numPlatforms;//the NO. of platforms
+	cl_platform_id platform = NULL;//the chosen platform
+	cl_int	status = clGetPlatformIDs(0, NULL, &numPlatforms);
+	if (status != CL_SUCCESS)
+	{
+		cout<<"Error: Getting platforms!"<<endl;
+		return 1;
+	}
+
+	/*For clarity, choose the first available platform. */
+	if(numPlatforms > 0)
+	{
+		cl_platform_id* platforms = (cl_platform_id* )malloc(numPlatforms* sizeof(cl_platform_id));
+		status = clGetPlatformIDs(numPlatforms, platforms, NULL);
+		platform = platforms[0];
+		free(platforms);
+	}
+
+	/*Step 2:Query the platform and choose the first GPU device if has one.Otherwise use the CPU as device.*/
+	cl_uint				numDevices = 0;
+	cl_device_id        *devices;
+	status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, NULL, &numDevices);	
+	if (numDevices == 0) //no GPU available.
+	{
+		cout << "No GPU device available."<<endl;
+		cout << "Choose CPU as default device."<<endl;
+		status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_CPU, 0, NULL, &numDevices);	
+		devices = (cl_device_id*)malloc(numDevices * sizeof(cl_device_id));
+
+		status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_CPU, numDevices, devices, NULL);
+	}
+	else
+	{
+		//printf("numdevices=%d\n",numDevices);
+		devices = (cl_device_id*)malloc(numDevices * sizeof(cl_device_id));
+
+		status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, numDevices, devices, NULL);
+	}
+	
+
+	/*Step 3: Create context.*/
+	cl_context context = clCreateContext(NULL,numDevices, devices,NULL,NULL,NULL);
+	
+	/*Step 4: Creating command queue associate with the context.*/
+	cl_command_queue commandQueue = clCreateCommandQueue(context, devices[0], 0, NULL);
+
+	/*Step 5: Create program object */
+	const char *filename = "HelloWorld_Kernel.cl";
+	string sourceStr;
+	status = convertToString(filename, sourceStr);
+	const char *source = sourceStr.c_str();
+	size_t sourceSize[] = {strlen(source)};
+	cl_program program = clCreateProgramWithSource(context, 1, &source, sourceSize, NULL);
+	
+	/*Step 6: Build program. */
+	status=clBuildProgram(program, numDevices,devices,NULL,NULL,NULL);
+	//if(status!=CL_SUCCESS)
+	//	printf("build fail");
+	//char *log;
+	//size_t logsize;
+	//clGetProgramBuildInfo(program,devices[0],CL_PROGRAM_BUILD_LOG,0,NULL,&logsize);
+	//log=(char*)malloc(logsize);
+	/*log[0]='h';
+	log[1]='\0';*/
+	//status=clGetProgramBuildInfo(program,devices[0],CL_PROGRAM_BUILD_LOG,logsize,log,NULL);
+	//if(status==CL_INVALID_DEVICE)
+	//	printf("error retrieving log");
+	//printf("%s",log);
+
+	/*status=CL_SUCCESS;
+	if(status!=CL_SUCCESS)
+	{
+		printf("build error\n");
+		scanf("%*c");
+		exit(1);
+	}*/
+
+	/*Step 7: Initial input,output for the host and create memory objects for the kernel*/
+	int noc=0,index=0,total=0,i=0,j=0,k=0,row=0,col=0;
+	
+	printf("enter no of cities");
+	scanf("%d",&noc);
+	scanf("%*c");
+	for(i=0;i<noc;i++)
+	{
+		for(j=0;j<noc;j++)
+		{
+			index=i*noc+j;
+			scanf("%d",&graph[index]);
+		}
+		scanf("%*c");
+	}
+	printf("\n");
+	
+	/*for(i=0;i<noc;i++)
+    {
+        for(j=0;j<noc;j++)
+        {
+            printf("%d ",graph[i*noc+j]);
+        }
+        printf("\n");
+    }*/
+
+	size_t arraysize=noc*noc;
+	printf("arraysize=%d\n",arraysize);
+	total=0;
+	k=0;
+
+	cl_mem Buffer1 = clCreateBuffer(context, CL_MEM_READ_WRITE|CL_MEM_COPY_HOST_PTR, arraysize*sizeof(int),(void*)graph,NULL);
+	cl_mem nocBuffer = clCreateBuffer(context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(int)	,(void*)&noc,NULL);
+	cl_mem Buffer2 = clCreateBuffer(context, CL_MEM_READ_WRITE, arraysize*sizeof(int),NULL,NULL);
+	cl_mem kBuffer = clCreateBuffer(context, CL_MEM_READ_WRITE|CL_MEM_COPY_HOST_PTR, sizeof(noc),(void*)&k,NULL);
+	cl_mem rowBuffer = clCreateBuffer(context, CL_MEM_READ_WRITE|CL_MEM_COPY_HOST_PTR, sizeof(noc),(void*)&row,NULL);
+	cl_mem colBuffer = clCreateBuffer(context, CL_MEM_READ_WRITE|CL_MEM_COPY_HOST_PTR, sizeof(noc),(void*)&col,NULL);
+	
+	/*Step 8: Create kernel object */
+	cl_kernel kernel = clCreateKernel(program,"floydwarshall", NULL);
+	cl_kernel kernel2 = clCreateKernel(program,"floydwarshall2", NULL);
+
+	/*Step 9: Sets Kernel arguments.*/
+	
+	//status = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&Buffer1);
+	status = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&nocBuffer);
+	//status = clSetKernelArg(kernel, 2, sizeof(cl_mem), (void *)&Buffer2);
+	status = clSetKernelArg(kernel, 3, sizeof(cl_mem), (void *)&kBuffer);
+
+	//status = clSetKernelArg(kernel2, 0, sizeof(cl_mem), (void *)&Buffer1);
+	status = clSetKernelArg(kernel2, 1, sizeof(cl_mem), (void *)&nocBuffer);
+	//status = clSetKernelArg(kernel2, 2, sizeof(cl_mem), (void *)&Buffer2);
+	status = clSetKernelArg(kernel2, 3, sizeof(cl_mem), (void *)&kBuffer);
+	status = clSetKernelArg(kernel2, 4, sizeof(cl_mem), (void *)&rowBuffer);
+	status = clSetKernelArg(kernel2, 5, sizeof(cl_mem), (void *)&colBuffer);
+
+
+	
+	/*Step 10: Running the kernel.*/
+	
+	row=noc/200;				////////////////*************************????????????????
+	if(noc%200!=0)
+		row++;
+	col=row;
+
+	time_t t=clock();
+	size_t dimsize;
+	size_t global_work_size[2];
+	if(noc<=200)				////////////////*************************????????????????
+	{
+		//printf("case 1\n");
+		dimsize=(size_t)noc;
+		global_work_size[0]=global_work_size[1]=dimsize;
+		printf("%d %d \n",global_work_size[0],global_work_size[1]);
+		
+		for(k=0;k<noc;k++)
+		{
+			status = clEnqueueWriteBuffer(commandQueue, kBuffer, CL_TRUE, 0,sizeof(int),&k, 0, NULL, NULL);
+			//status = clSetKernelArg(kernel, 3, sizeof(cl_mem), (void *)&kBuffer);
+			
+			if(k%2==0)
+			{
+				status = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&Buffer1);
+				status = clSetKernelArg(kernel, 2, sizeof(cl_mem), (void *)&Buffer2);
+				
+				status = clEnqueueNDRangeKernel(commandQueue, kernel, 2, NULL, global_work_size, NULL, 0, NULL, NULL);
+				//if(status!=CL_SUCCESS)
+				//printf("fucking error\n");
+			}
+			else
+			{
+				status = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&Buffer2);
+				status = clSetKernelArg(kernel, 2, sizeof(cl_mem), (void *)&Buffer1);
+				
+				status = clEnqueueNDRangeKernel(commandQueue, kernel, 2, NULL, global_work_size, NULL, 0, NULL, NULL);
+				//if(status!=CL_SUCCESS)
+				//printf("fucking error\n");
+			}
+		}
+	}
+
+	else
+	{
+		//printf("case 2\n");
+		dimsize=(size_t)200;   ////////////////*************************????????????????
+		global_work_size[0]=global_work_size[1]=dimsize;
+		//printf("%d %d \n",global_work_size[0],global_work_size[1]);
+
+		for(k=0;k<noc;k++)
+		{
+			status = clEnqueueWriteBuffer(commandQueue, kBuffer, CL_TRUE, 0,sizeof(int),&k, 0, NULL, NULL);
+			//status = clSetKernelArg(kernel2, 3, sizeof(cl_mem), (void *)&kBuffer);
+			
+			if(k%2==0)
+			{
+				status = clSetKernelArg(kernel2, 0, sizeof(cl_mem), (void *)&Buffer1);
+				status = clSetKernelArg(kernel2, 2, sizeof(cl_mem), (void *)&Buffer2);
+				for(i=0;i<row;i++)
+				{
+					for(j=0;j<col;j++)
+					{
+						status = clEnqueueWriteBuffer(commandQueue, rowBuffer, CL_TRUE, 0,sizeof(int),&i, 0, NULL, NULL);
+						status = clEnqueueWriteBuffer(commandQueue, colBuffer, CL_TRUE, 0,sizeof(int),&j, 0, NULL, NULL);
+						//status = clSetKernelArg(kernel2, 4, sizeof(cl_mem), (void *)&rowBuffer);
+						//status = clSetKernelArg(kernel2, 5, sizeof(cl_mem), (void *)&colBuffer);
+						
+						status = clEnqueueNDRangeKernel(commandQueue, kernel2, 2, NULL, global_work_size, NULL, 0, NULL, NULL);
+						//if(status!=CL_SUCCESS)
+						//printf("fucking error\n");
+					}
+				}
+			}
+			else
+			{
+				status = clSetKernelArg(kernel2, 0, sizeof(cl_mem), (void *)&Buffer2);
+				status = clSetKernelArg(kernel2, 2, sizeof(cl_mem), (void *)&Buffer1);
+				for(i=0;i<row;i++)
+				{
+					for(j=0;j<col;j++)
+					{
+						status = clEnqueueWriteBuffer(commandQueue, rowBuffer, CL_TRUE, 0,sizeof(int),&i, 0, NULL, NULL);
+						status = clEnqueueWriteBuffer(commandQueue, colBuffer, CL_TRUE, 0,sizeof(int),&j, 0, NULL, NULL);
+						//status = clSetKernelArg(kernel2, 4, sizeof(cl_mem), (void *)&rowBuffer);
+						//status = clSetKernelArg(kernel2, 5, sizeof(cl_mem), (void *)&colBuffer);
+						
+						status = clEnqueueNDRangeKernel(commandQueue, kernel2, 2, NULL, global_work_size, NULL, 0, NULL, NULL);
+						//if(status!=CL_SUCCESS)
+						//printf("fucking error\n");
+					}
+				}
+			}
+		}
+
+	}
+	t=clock()-t;
+	//float t1=(float)t/1000;
+	printf("no of ticks=%d \n",t);
+	/*Step 11: Read the cout put back to host memory.*/
+	if((noc-1)%2==0)
+		status = clEnqueueReadBuffer(commandQueue, Buffer2, CL_TRUE, 0, arraysize * sizeof(int),result, 0, NULL, NULL);
+	else
+		status = clEnqueueReadBuffer(commandQueue, Buffer1, CL_TRUE, 0, arraysize * sizeof(int),result, 0, NULL, NULL);
+	
+	//status = clEnqueueReadBuffer(commandQueue, kBuffer, CL_TRUE, 0,sizeof(int),&k, 0, NULL, NULL);
+	
+	//printf("k=%d\n",k);
+	
+	for(i=0;i<noc;i++)
+    {
+        for(j=0;j<noc;j++)
+        {	
+            printf("%d ",result[i*noc+j]);
+        }
+        printf("\n");
+    }
+
+
+	
+	/*Step 12: Clean the resources.*/
+
+	status = clReleaseKernel(kernel);//*Release kernel.
+	status = clReleaseProgram(program);	//Release the program object.
+	status = clReleaseMemObject(Buffer1);//Release mem object.
+	status = clReleaseMemObject(nocBuffer);
+	status = clReleaseMemObject(Buffer2);
+	status = clReleaseMemObject(kBuffer);
+	status = clReleaseMemObject(rowBuffer);
+	status = clReleaseMemObject(colBuffer);
+	status = clReleaseCommandQueue(commandQueue);//Release  Command queue.
+	status = clReleaseContext(context);//Release context.
+
+
+	if (devices != NULL)
+	{
+		free(devices);
+		devices = NULL;
+	}
+	scanf("%*c");
+	return 0;
+}
